@@ -1,0 +1,108 @@
+﻿<div id="VuePage">
+    <div class="panel panel-default">
+        <div class="panel-heading">查詢條件</div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-2">
+                    市場別
+                </div>
+                <div class="col-md-2">
+                    <select class="form-control" v-model="form.Q_MARKET_TYPE">
+                        <option value="sii">上市</option>
+                        <option value="otc">上櫃</option>
+                        <option value="rotc">興櫃</option>
+                        <option value="pub">公開發行</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="panel-footer">
+            <button type="button" class="btn btn-default" v-on:click="GetData()">查詢</button>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            股票基本資料
+        </div>
+        <div class="panel-body">
+            <table class="table">
+                <tr>
+                    <th>公司代號</th>
+                    <th>公司名稱</th>
+                    <th>公司簡稱</th>
+                    <th>產業類別</th>
+                    <th>外國企業註冊地國</th>
+                    <th>住址</th>
+                    <th>營利事業統一編號</th>
+                    <th>董事長</th>
+                </tr>
+                <tr v-for="(item, index) in gridList.datas">
+                    <td>{{item.CompanyCode}}</td>
+                    <td>{{item.CompanyName}}</td>
+                    <td>{{item.CompanyAbbreviation}}</td>
+                    <td>{{item.IndustryCategory}}</td>
+                    <td>{{item.ForeignCompanyRegistrationCountry}}</td>
+                    <td>{{item.Address}}</td>
+                    <td>{{item.UniformNumberProfitBusiness}}</td>
+                    <td>{{item.Chairman}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+@section scripts{
+    <script>
+        var VuePage = new Vue({
+            el: '#VuePage'
+            , data: {
+                form: {
+                    Q_MARKET_TYPE:""
+                }
+                , gridList: {
+                    datas: []
+                }
+            }
+            , methods: {
+                GetData: function () {
+                    var self = this;
+                    var postData = {};
+                    postData["Q_MARKET_TYPE"] = self.form.Q_MARKET_TYPE;
+
+                    // 開啟鎖定
+                    $.blockUI({ message: '處理中...' });
+
+                    $.ajax({
+                        url:'@Url.Content("~/Home/GetData")',
+                        method:'POST',
+                        dataType:'json',
+                        data: { inModel: postData },
+                        success: function (datas) {
+                            if (datas.ErrMsg) {
+                                alert(datas.ErrMsg);
+                                // 停止鎖定
+                                $.unblockUI();
+                                return;
+                            }
+                            // 顯示列表資料
+                            self.gridList.datas = [];
+                            for (var i in datas.gridList) {
+                                var gridData = {};
+                                for (var key in datas.gridList[i]) {
+                                    gridData[key] = datas.gridList[i][key];
+                                }
+                                self.gridList.datas.push(gridData);
+                            }
+                            // 停止鎖定
+                            $.unblockUI();
+                        },
+                        error: function (err) {
+                            alert(err.responseText);
+                        },
+                    });
+                }
+            }
+        })
+    </script>
+}
+
